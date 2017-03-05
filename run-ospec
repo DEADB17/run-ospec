@@ -1,0 +1,87 @@
+#!/usr/bin/env node
+// -*- mode: js2; -*-
+
+'use strict';
+
+var fs = require('fs');
+var path = require('path');
+var o = require('ospec');
+
+var DEFAULT_REGEXP = /(?:^|\/)tests\/.*\.js$/;
+var FILE_REGEXP_ARG = 2;
+var DEFAULT_ROOT_PATH = '.';
+var ROOT_PATH_ARG = 3;
+var argRegexp, fileRegexp, root, proc, traverseDirectory;
+
+function makeReaddir(pathname, callback, resolve, reject, stat) {
+    return function readDir(err2, pathnames) {
+        var promises = [];
+        var i, n;
+        if (err2) reject(err2);
+        for (i = 0, n = pathnames.length; i < n; i++) {
+            if (pathnames[i] !== 'node_modules') {
+                pathnames[i] = path.join(pathname, pathnames[i]);
+                promises.push(traverseDirectory(pathnames[i], callback));
+            }
+        }
+        callback(pathname, stat, pathnames); // eslint-disable-line callback-return
+        resolve(Promise.all(promises));
+    };
+}
+
+function makeLstat(pathname, callback, resolve, reject) {
+    return function lstat(err, stat) {
+        if (err) reject(err);
+        if (stat && stat.isDirectory()) {
+            fs.readdir(pathname, makeReaddir(pathname, callback, resolve, reject, stat));
+        } else {
+            callback(pathname, stat); // eslint-disable-line callback-return
+            resolve(pathname);
+        }
+    };
+}
+
+traverseDirectory = function (pathname, callback) {
+    return new Promise(function (resolve, reject) {
+        fs.lstat(pathname, makeLstat(pathname, callback, resolve, reject));
+    });
+};
+
+function makeDoIfMatching(processModule, regexp) {
+    return function doIfMatching(pathname) {
+        var mod, cwd;
+        if (pathname.match(regexp)) {
+            cwd = path.normalize(process.cwd());
+            mod = path.join(cwd, pathname);
+            processModule(mod);
+        }
+    };
+}
+
+function main(testProc, rootPath, processPathname) {
+    traverseDirectory(rootPath, processPathname)
+        .then(testProc)
+        .catch(function (e) { console.log(e.stack); }); // eslint-disable-line no-console
+
+    process.on('unhandledRejection', function (e) {
+        console.log('Uncaught (in promise) %j', e.stack); // eslint-disable-line no-console
+    });
+}
+
+if (require.main === module) {
+    argRegexp = new RegExp(process.argv[FILE_REGEXP_ARG]);
+    fileRegexp = argRegexp || DEFAULT_REGEXP;
+    root = process.argv[ROOT_PATH_ARG] || DEFAULT_ROOT_PATH;
+    proc = makeDoIfMatching(require, fileRegexp);
+    main(o.run, root, proc);
+} else {
+    module.exports = {
+        DEFAULT_REGEXP: DEFAULT_REGEXP,
+        DEFAULT_ROOT_PATH: DEFAULT_ROOT_PATH,
+        main: main,
+        makeDoIfMatching: makeDoIfMatching,
+        traverseDirectory: traverseDirectory,
+        makeLstat: makeLstat,
+        makeReaddir: makeReaddir,
+    };
+}

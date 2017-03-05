@@ -1,0 +1,34 @@
+* =run-ospec=
+
+/A more flexible ospec runner./
+
+[[https://www.npmjs.com/package/ospec][ospec]] is a tese testing framework that explicitly disallows test-space
+configuration to encourage focus on testing, and to provide uniform test suites
+across projects.
+
+=run-ospec= is an alternative runner that allows to select which files will be
+tested by =ospec=.
+
+I wanted the flexibility to choose which tests to run with =ospec= while
+migrating existing tests that used a different framework that relied on the same
+naming convention.
+
+If you are starting a new project and and ospec's naming convention works, you
+should stick to it.
+
+[[https://www.npmjs.com/package/ospec#api][ospec API]] reference.
+
+
+** =run-ospec= API
+
+=run-ospec [fileRegexp] [rootDirectory]=
+
+- =[fileRegexp]= /optional/ javascript regexp string used to match ospec test
+  files. Defaults to =/(?:^|\/)tests\/.*\.js$/=, ospec's default.
+- =[rootDirectory]= /optional/ string to specify the root directory where the
+  tests will be searched for. Defaults to =.= lke ospec.
+
+** To do
+- [ ] Add tests
+- [ ] Maybe a more robust option parser
+- [ ] Maybe windows support

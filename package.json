@@ -1,0 +1,35 @@
+{
+  "name": "@deadb17/run-ospec",
+  "version": "1.0.0-alpha",
+  "description": "A more flexible ospec runner",
+  "author": "DEADB17 <deadb17@gmail.com>",
+  "license": "GPL-3.0",
+  "private": true,
+  "repository": "https://github.com/DEADB17/run-ospec",
+  "issues": "https://github.com/DEADB17/run-ospec/issues",
+  "eslintConfig": {
+    "extends": "@deadb17/eslint-config/es5/strict",
+    "env": {
+      "node": true
+    },
+    "globals": {
+      "Promise": true
+    },
+    "rules": {
+      "no-magic-numbers": ["error", { "ignore": [0, 1] }],
+      "object-shorthand": "off",
+      "prefer-template": "off",
+      "func-names": "off"
+    }
+  },
+  "dependencies": {
+    "ospec": "^1.2.3"
+  },
+  "scripts": {
+    "postversion": "git push && git push --tags"
+  },
+  "devDependencies": {
+    "@deadb17/eslint-config": "^1.0.0-rc.4",
+    "eslint": "^3.17.0"
+  }
+}
