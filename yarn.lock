@@ -3,8 +3,8 @@
 
 
 "@deadb17/eslint-config@^1.0.0-rc.4":
-  version "1.0.0-rc.4"
-  resolved "https://registry.yarnpkg.com/@deadb17/eslint-config/-/eslint-config-1.0.0-rc.4.tgz#6196fb127eb3660bdf8d23cd90363540d714a9a9"
+  version "1.0.0-rc.5"
+  resolved "https://registry.yarnpkg.com/@deadb17/eslint-config/-/eslint-config-1.0.0-rc.5.tgz#42a823df558de607d248d1788ee848d6b0450910"
 
 acorn-jsx@^3.0.0:
   version "3.0.1"

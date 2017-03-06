@@ -1,77 +1,83 @@
 #!/usr/bin/env node
 // -*- mode: js2; -*-
+/*eslint no-extra-parens: 'off'*/
 
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
-var o = require('ospec');
+const fs = require('fs');
+const path = require('path');
+const o = require('ospec');
 
-var DEFAULT_REGEXP = /(?:^|\/)tests\/.*\.js$/;
-var FILE_REGEXP_ARG = 2;
-var DEFAULT_ROOT_PATH = '.';
-var ROOT_PATH_ARG = 3;
-var argRegexp, fileRegexp, root, proc;
+const DEFAULT_REGEXP = /(?:^|\/)tests\/.*\.js$/;
 
-function traverseDirectory(pathname, callback) {
-    return new Promise(function (resolve, reject) {
-        fs.lstat(pathname, function lstat(err, stat) {
-            if (err) reject(err);
-            if (stat && stat.isDirectory()) {
-                fs.readdir(pathname, function readDir(err2, pathnames) {
-                    var promises = [];
-                    var i, n;
-                    if (err2) reject(err2);
-                    for (i = 0, n = pathnames.length; i < n; i++) {
-                        if (pathnames[i] !== 'node_modules') {
-                            pathnames[i] = path.join(pathname, pathnames[i]);
-                            promises.push(traverseDirectory(pathnames[i], callback));
-                        }
-                    }
-                    callback(pathname, stat, pathnames); // eslint-disable-line callback-return
-                    resolve(Promise.all(promises));
-                });
-            } else {
-                callback(pathname, stat); // eslint-disable-line callback-return
-                resolve(pathname);
+function traverseDirectory(startingPathname, callback) {
+    let pending = 0;
+
+    function rec(pathname) {
+        const lstat = (err, stat) => {
+            if (err) return callback('stat-error', pathname, (pending -= 1), err);
+            if (stat &&
+                stat.isDirectory() &&
+                callback('readdir?', pathname, pending, stat)) { //eslint-disable-line callback-return
+                return fs.readdir(pathname, readdir); // eslint-disable-line no-use-before-define
             }
-        });
-    });
-}
+            return callback('stat', pathname, (pending -= 1), stat);
+        };
 
-function makeDoIfMatching(processModule, regexp) {
-    return function doIfMatching(pathname) {
-        var mod, cwd;
-        if (pathname.match(regexp)) {
-            cwd = path.normalize(process.cwd());
-            mod = path.join(cwd, pathname);
-            processModule(mod);
-        }
-    };
-}
+        const readdir = (err, paths) => {
+            if (err) return callback('readdir-error', pathname, (pending -= 1), err);
+            paths.forEach(it => rec(path.join(pathname, it)));
+            return callback('readdir', pathname, (pending -= 1), paths);
+        };
 
-function main(testProc, rootPath, processPathname) {
-    traverseDirectory(rootPath, processPathname)
-        .then(testProc)
-        .catch(function (e) { console.log(e.stack); }); // eslint-disable-line no-console
+        pending += 1;
+        fs.lstat(pathname, lstat);
+    }
 
-    process.on('unhandledRejection', function (e) {
-        console.log('Uncaught (in promise) %j', e.stack); // eslint-disable-line no-console
-    });
+    rec(startingPathname);
 }
 
 if (require.main === module) {
-    argRegexp = new RegExp(process.argv[FILE_REGEXP_ARG]);
-    fileRegexp = argRegexp || DEFAULT_REGEXP;
-    root = process.argv[ROOT_PATH_ARG] || DEFAULT_ROOT_PATH;
-    proc = makeDoIfMatching(require, fileRegexp);
-    main(o.run, root, proc);
+    const CWD = process.cwd();
+    const DEFAULT_ROOT_PATH = path.join(CWD, 'tests');
+    const FILE_REGEXP_ARG = 2;
+    const ROOT_PATH_ARG = 3;
+    const IGNORE_DIRS = ['node_modules', '.git'];
+
+    let fileRegexp;
+    if (process.argv.length > FILE_REGEXP_ARG) {
+        fileRegexp = new RegExp(process.argv[FILE_REGEXP_ARG]);
+    } else {
+        fileRegexp = DEFAULT_REGEXP;
+    }
+
+    let root;
+    if (process.argv.length > ROOT_PATH_ARG) {
+        root = process.argv[ROOT_PATH_ARG];
+    } else {
+        root = DEFAULT_ROOT_PATH;
+    }
+
+    const callback = (type, pathname/*, pending, it*/) => {
+        switch (type) {
+        case 'readdir?':
+            return !(IGNORE_DIRS.includes(pathname));
+        case 'stat':
+            if (pathname.match(fileRegexp)) {
+                const pname = path.normalize(path.join(CWD, pathname));
+                require(pname); // eslint-disable-line global-require
+                o.run();
+            }
+            break;
+        default:
+        }
+        return false;
+    };
+
+    traverseDirectory(root, callback);
 } else {
     module.exports = {
         DEFAULT_REGEXP: DEFAULT_REGEXP,
-        DEFAULT_ROOT_PATH: DEFAULT_ROOT_PATH,
-        main: main,
-        makeDoIfMatching: makeDoIfMatching,
         traverseDirectory: traverseDirectory,
     };
 }

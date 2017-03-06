@@ -1,0 +1,15 @@
+{
+  "extends": "@deadb17/eslint-config/es6/strict-script",
+  "env": {
+    "node": true
+  },
+  "globals": {
+    "Promise": true
+  },
+  "rules": {
+    "no-magic-numbers": ["error", {"ignore": [0, 1]}],
+    "object-shorthand": "off",
+    "prefer-template": "off",
+    "func-names": "off"
+  }
+}

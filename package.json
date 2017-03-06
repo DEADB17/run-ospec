@@ -7,29 +7,15 @@
   "private": true,
   "repository": "https://github.com/DEADB17/run-ospec",
   "issues": "https://github.com/DEADB17/run-ospec/issues",
-  "eslintConfig": {
-    "extends": "@deadb17/eslint-config/es5/strict",
-    "env": {
-      "node": true
-    },
-    "globals": {
-      "Promise": true
-    },
-    "rules": {
-      "no-magic-numbers": ["error", { "ignore": [0, 1] }],
-      "object-shorthand": "off",
-      "prefer-template": "off",
-      "func-names": "off"
-    }
-  },
   "dependencies": {
     "ospec": "^1.2.3"
   },
-  "scripts": {
-    "postversion": "git push && git push --tags"
-  },
   "devDependencies": {
-    "@deadb17/eslint-config": "^1.0.0-rc.4",
+    "@deadb17/eslint-config": "^1.0.0-rc.5",
     "eslint": "^3.17.0"
+  },
+  "scripts": {
+    "postversion": "git push && git push --tags",
+    "test": "ospec"
   }
 }
