@@ -8,11 +8,11 @@
   "repository": "https://github.com/DEADB17/run-ospec",
   "issues": "https://github.com/DEADB17/run-ospec/issues",
   "dependencies": {
-    "ospec": "^1.2.3"
+    "ospec": "^3.1.0"
   },
   "devDependencies": {
-    "@deadb17/eslint-config": "^1.0.0-rc.5",
-    "eslint": "^3.17.0"
+    "@deadb17/eslint-config": "^6.0.0-rc.1",
+    "eslint": "^6.0.1"
   },
   "scripts": {
     "postversion": "git push && git push --tags",
